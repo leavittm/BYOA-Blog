@@ -1,9 +1,13 @@
-# A Simple static blog site built with html, css and javascript and node.js
+# Simple Static Blog
+
+A lightweight blog built with HTML, CSS, JavaScript, and Node.js that converts markdown content into static blog posts.
 
 ## Features
-A landing page
-A template for blog posts
-A way to add new blog posts
-A markdown to html converter
-Simple integration of converkit for newsletter
-A contact form
+- Landing page with list of blog posts
+- Markdown to HTML conversion for blog posts
+- Clean, minimal blog post template
+- About page
+- FAQ page
+- Simple and maintainable codebase
+
+## Project Structure
