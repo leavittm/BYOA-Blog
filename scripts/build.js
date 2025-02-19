@@ -30,13 +30,13 @@ function convertMarkdownToHtml() {
             const { data, content } = matter(fileContent);
             
             // Convert markdown to HTML
-            const htmlContent = marked(content);
+            const htmlContent = marked.parse(content);
             
             // Replace template placeholders
             let postHtml = template
-                .replace('{{title}}', data.title)
-                .replace('{{date}}', data.date)
-                .replace('{{content}}', htmlContent);
+                .replaceAll("{{title}}", data.title)
+                .replaceAll("{{date}}", data.date)
+                .replaceAll("{{content}}", htmlContent);
             
             // Save HTML file
             const htmlFileName = path.basename(file, '.md') + '.html';
