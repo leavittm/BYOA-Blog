@@ -53,12 +53,12 @@ function convertMarkdownToHtml() {
             // Generate image path
             const slug = path.basename(file, '.md');
             const imagePath = `/images/posts/${slug}.jpg`;
-            const imageExists = fs.existsSync(path.join(__dirname, '../public', imagePath));
+            const imageExists = fs.existsSync(path.join(__dirname, '..', imagePath));
             const finalImagePath = imageExists ? imagePath : defaultPostImage;
             
             let postHtml = template
                 .replaceAll("{{title}}", data.title)
-                .replaceAll("{{date}}", data.date)
+                .replaceAll("{{date}}", formatDate(data.date))
                 .replaceAll("{{content}}", htmlContent)
                 .replaceAll("{{image}}", finalImagePath);
             
@@ -134,11 +134,26 @@ function generatePostsList(posts) {
             <img src="${post.image}" alt="${post.title}">
             <div class="post-card-content">
                 <h3>${post.title}</h3>
-                <time>${post.date}</time>
+                <time>${formatDate(post.date)}</time>
                 <p>${post.description}</p>
             </div>
         </a>
     `).join('');
+}
+
+function formatDate(dateStr) {
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date)) {
+            // If date parsing fails, return original string
+            return dateStr;
+        }
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[date.getMonth()]} ${date.getDate()} ${date.getFullYear()}`;
+    } catch (e) {
+        console.error('Date parsing error:', e);
+        return dateStr;
+    }
 }
 
 // Run the build

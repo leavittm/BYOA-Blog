@@ -236,17 +236,40 @@ footer {
 }
 
 .post-card h3 {
-    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    color: #333;
+}
+
+.post-card h3 a {
+    color: inherit;
+}
+
+.post-card a {
+    text-decoration: none;
+    color: #333;
 }
 
 .post-card time {
     color: #666;
     font-size: 0.9rem;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 1rem;
 }
 
 .post-card p {
-    margin-top: 1rem;
-    color: #444;
+    margin-top: 0;
+    color: #666;
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Ensure visited links don't change color */
+.post-card a:visited {
+    color: inherit;
 }
 
 /* Single post page */
@@ -262,4 +285,91 @@ footer {
     .posts-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.post-card a,
+.post-card h3 a,
+.post-card-content a {
+    text-decoration: none !important;  /* Force remove underline */
+    color: #333;
+}
+
+.post-card a:hover,
+.post-card h3 a:hover,
+.post-card-content a:hover {
+    text-decoration: none !important;
+}
+
+/* Post card link styles - targeting the outer link */
+a.post-card {
+    text-decoration: none !important;
+    color: inherit;
+    display: block;  /* Ensure it takes full width */
+}
+
+/* Ensure no underlines on any nested elements */
+.post-card-content h3,
+.post-card-content time,
+.post-card-content p {
+    text-decoration: none !important;
+}
+
+/* Add these new styles for post content */
+.post-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.post-content h1,
+.post-content h2,
+.post-content h3,
+.post-content h4,
+.post-content h5,
+.post-content h6 {
+    margin: 2rem 0 1rem;
+    line-height: 1.3;
+}
+
+.post-content p {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+}
+
+.post-content ul,
+.post-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 2rem;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.post-content blockquote {
+    margin: 2rem 0;
+    padding-left: 1.5rem;
+    border-left: 4px solid #333;
+    font-style: italic;
+    color: #666;
+}
+
+.post-content code {
+    background-color: #f4f4f4;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.post-content pre {
+    background-color: #f4f4f4;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
 } 
