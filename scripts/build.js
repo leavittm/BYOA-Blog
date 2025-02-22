@@ -12,6 +12,9 @@ const templatePath = path.join(__dirname, '../templates/layouts/post.html');
 const pagesDirectory = path.join(__dirname, '../pages');
 const publicDirectory = path.join(__dirname, '../public');
 
+// Add after existing constants
+const defaultPostImage = '/images/posts/default-post.jpg';
+
 // Create output directory if it doesn't exist
 if (!fs.existsSync(outputDirectory)) {
     fs.mkdirSync(outputDirectory, { recursive: true });
@@ -31,54 +34,46 @@ function buildPage(template, data) {
         .replace('{{title}}', data.title || 'My Blog')
         .replace('{{head}}', data.head || '')
         .replace('{{content}}', data.content)
+        .replace('{{posts}}', data.posts || '')
         .replace('{{scripts}}', data.scripts || '');
 }
 
 function convertMarkdownToHtml() {
-    // Read post template
     const template = fs.readFileSync(templatePath, 'utf-8');
-
-    // Read all markdown files
     const files = fs.readdirSync(postsDirectory);
     const posts = [];
 
     files.forEach(file => {
-        if (path.extname(file) === '.md') {
-            // Skip any files that start with '_' or '.' (common convention for templates/hidden files)
-            if (file.startsWith('_') || file.startsWith('.')) {
-                return;
-            }
-            
+        if (path.extname(file) === '.md' && !file.startsWith('_') && !file.startsWith('.')) {
             const filePath = path.join(postsDirectory, file);
             const fileContent = fs.readFileSync(filePath, 'utf-8');
-            
-            // Parse front matter
             const { data, content } = matter(fileContent);
-            
-            // Convert markdown to HTML
             const htmlContent = marked.parse(content);
             
-            // Replace template placeholders
+            // Generate image path
+            const slug = path.basename(file, '.md');
+            const imagePath = `/images/posts/${slug}.jpg`;
+            const imageExists = fs.existsSync(path.join(__dirname, '../public', imagePath));
+            const finalImagePath = imageExists ? imagePath : defaultPostImage;
+            
             let postHtml = template
                 .replaceAll("{{title}}", data.title)
                 .replaceAll("{{date}}", data.date)
-                .replaceAll("{{content}}", htmlContent);
+                .replaceAll("{{content}}", htmlContent)
+                .replaceAll("{{image}}", finalImagePath);
             
-            // Save HTML file
-            const htmlFileName = path.basename(file, '.md') + '.html';
+            const htmlFileName = `${slug}.html`;
             fs.writeFileSync(path.join(outputDirectory, htmlFileName), postHtml);
             
-            // Add to posts list
             posts.push({
                 title: data.title,
                 date: data.date,
                 description: data.description,
-                url: `/posts/${htmlFileName}`
+                url: `/posts/${htmlFileName}`,
+                image: finalImagePath
             });
         }
     });
-
-    // Generate posts list for index page
     return posts;
 }
 
@@ -101,6 +96,7 @@ function buildSite() {
     const indexHtml = buildPage(indexTemplate, {
         title: 'My Blog',
         content: generatePostsList(posts),
+        posts: generatePostsList(posts),
         scripts: '<script src="/js/main.js"></script>'
     });
     fs.writeFileSync(path.join(publicDirectory, 'index.html'), indexHtml);
@@ -133,18 +129,16 @@ function extractMainContent(html) {
 }
 
 function generatePostsList(posts) {
-    return `
-        <h1>Welcome to My Blog</h1>
-        <div id="posts-list">
-            ${posts.map(post => `
-                <div class="post-preview">
-                    <h2><a href="${post.url}">${post.title}</a></h2>
-                    <time>${post.date}</time>
-                    <p>${post.description}</p>
-                </div>
-            `).join('')}
-        </div>
-    `;
+    return posts.map(post => `
+        <a href="${post.url}" class="post-card">
+            <img src="${post.image}" alt="${post.title}">
+            <div class="post-card-content">
+                <h3>${post.title}</h3>
+                <time>${post.date}</time>
+                <p>${post.description}</p>
+            </div>
+        </a>
+    `).join('');
 }
 
 // Run the build
