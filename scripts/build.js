@@ -20,61 +20,43 @@ if (!fs.existsSync(outputDirectory)) {
     fs.mkdirSync(outputDirectory, { recursive: true });
 }
 
-function loadPartial(name) {
-    return fs.readFileSync(path.join(__dirname, `../templates/partials/${name}.html`), 'utf-8');
+function loadPartial(name, data = {}) {
+    let partial = fs.readFileSync(path.join(__dirname, `../templates/partials/${name}.html`), 'utf-8');
+    
+    // Replace posts_list placeholder if it exists and data contains posts
+    if (data.posts && partial.includes('{{posts_list}}')) {
+        const postsListHtml = data.posts
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .map(post => `<li><a href="${post.url}">${post.title}</a></li>`)
+            .join('');
+        partial = partial.replace('{{posts_list}}', postsListHtml);
+    }
+    
+    return partial;
 }
 
 function buildPage(template, data) {
-    const header = loadPartial('header');
+    const header = loadPartial('header', { posts: data.allPosts });
     const footer = loadPartial('footer');
     
-    return template
-        .replace('{{header}}', header)
-        .replace('{{footer}}', footer)
-        .replace('{{title}}', data.title || 'My Blog')
-        .replace('{{head}}', data.head || '')
-        .replace('{{content}}', data.content)
-        .replace('{{posts}}', data.posts || '')
-        .replace('{{scripts}}', data.scripts || '');
-}
+    let html = template
+        .replaceAll('{{header}}', header)
+        .replaceAll('{{footer}}', footer)
+        .replaceAll('{{title}}', data.title || 'My Blog')
+        .replaceAll('{{head}}', data.head || '')
+        .replaceAll('{{content}}', data.content)
+        .replaceAll('{{posts}}', data.posts || '')
+        .replaceAll('{{scripts}}', data.scripts || '');
 
-function convertMarkdownToHtml() {
-    const template = fs.readFileSync(templatePath, 'utf-8');
-    const files = fs.readdirSync(postsDirectory);
-    const posts = [];
+    // Handle post-specific variables
+    if (data.date) {
+        html = html.replace('{{date}}', data.date);
+    }
+    if (data.image) {
+        html = html.replace('{{image}}', data.image);
+    }
 
-    files.forEach(file => {
-        if (path.extname(file) === '.md' && !file.startsWith('_') && !file.startsWith('.')) {
-            const filePath = path.join(postsDirectory, file);
-            const fileContent = fs.readFileSync(filePath, 'utf-8');
-            const { data, content } = matter(fileContent);
-            const htmlContent = marked.parse(content);
-            
-            // Generate image path
-            const slug = path.basename(file, '.md');
-            const imagePath = `/images/posts/${slug}.jpg`;
-            const imageExists = fs.existsSync(path.join(__dirname, '..', imagePath));
-            const finalImagePath = imageExists ? imagePath : defaultPostImage;
-            
-            let postHtml = template
-                .replaceAll("{{title}}", data.title)
-                .replaceAll("{{date}}", formatDate(data.date))
-                .replaceAll("{{content}}", htmlContent)
-                .replaceAll("{{image}}", finalImagePath);
-            
-            const htmlFileName = `${slug}.html`;
-            fs.writeFileSync(path.join(outputDirectory, htmlFileName), postHtml);
-            
-            posts.push({
-                title: data.title,
-                date: data.date,
-                description: data.description,
-                url: `/posts/${htmlFileName}`,
-                image: finalImagePath
-            });
-        }
-    });
-    return posts;
+    return html;
 }
 
 function ensureDirectoryExists(directory) {
@@ -88,8 +70,48 @@ function buildSite() {
     ensureDirectoryExists(publicDirectory);
     ensureDirectoryExists(path.join(publicDirectory, 'posts'));
 
-    // Build posts
-    const posts = convertMarkdownToHtml();
+    // First, gather all posts data without building the files
+    const posts = [];
+    const files = fs.readdirSync(postsDirectory);
+    
+    files.forEach(file => {
+        if (path.extname(file) === '.md' && !file.startsWith('_') && !file.startsWith('.')) {
+            const filePath = path.join(postsDirectory, file);
+            const fileContent = fs.readFileSync(filePath, 'utf-8');
+            const { data, content } = matter(fileContent);
+            const slug = path.basename(file, '.md');
+            const imagePath = `/images/posts/${slug}.jpg`;
+            const imageExists = fs.existsSync(path.join(__dirname, '..', imagePath));
+            const finalImagePath = imageExists ? imagePath : defaultPostImage;
+            
+            posts.push({
+                title: data.title,
+                date: data.date,
+                description: data.description,
+                content: content,
+                url: `/posts/${slug}.html`,
+                image: finalImagePath,
+                slug: slug
+            });
+        }
+    });
+
+    // Now build all posts with the complete posts list
+    const postTemplate = fs.readFileSync(templatePath, 'utf-8');
+    posts.forEach(post => {
+        const htmlContent = marked.parse(post.content);
+        const postHtml = buildPage(postTemplate, {
+            title: post.title,
+            content: htmlContent,
+            date: formatDate(post.date),
+            image: post.image,
+            allPosts: posts,
+            head: '',
+            scripts: ''
+        });
+        
+        fs.writeFileSync(path.join(outputDirectory, post.slug + '.html'), postHtml);
+    });
 
     // Build index page
     const indexTemplate = fs.readFileSync(path.join(__dirname, '../templates/layouts/home.html'), 'utf-8');
@@ -97,26 +119,25 @@ function buildSite() {
         title: 'My Blog',
         content: generatePostsList(posts),
         posts: generatePostsList(posts),
+        allPosts: posts,
         scripts: '<script src="/js/main.js"></script>'
     });
     fs.writeFileSync(path.join(publicDirectory, 'index.html'), indexHtml);
 
-    // Build static pages using base template
+    // Build static pages
     const baseTemplate = fs.readFileSync(path.join(__dirname, '../templates/layouts/base.html'), 'utf-8');
-    
-    // Read content from pages directory
-    const pages = fs.readdirSync(path.join(__dirname, '../pages'));
+    const pages = fs.readdirSync(pagesDirectory);
     
     pages.forEach(page => {
         if (path.extname(page) === '.html') {
-            const content = fs.readFileSync(path.join(__dirname, '../pages', page), 'utf-8');
+            const content = fs.readFileSync(path.join(pagesDirectory, page), 'utf-8');
             const pageName = path.basename(page, '.html');
             const pageHtml = buildPage(baseTemplate, {
                 title: `${pageName.charAt(0).toUpperCase() + pageName.slice(1)} - My Blog`,
                 content: extractMainContent(content),
-                scripts: '' // Add any page-specific scripts here if needed
+                allPosts: posts,
+                scripts: ''
             });
-            // Write directly to public folder
             fs.writeFileSync(path.join(publicDirectory, page), pageHtml);
         }
     });
