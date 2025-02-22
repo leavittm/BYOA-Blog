@@ -3,16 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Blog</title>
+    <title>Work Smarter, Not Harder</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/home.css">
 </head>
 <body>
     {{header}}
     
-    <!-- Custom homepage content -->
+    <!-- Hero section -->
     <main class="home-main">
-        {{content}}
+        <section class="hero">
+            <h1>Work <span class="gradient-text">Smarter</span>,<br>Not Harder</h1>
+            <p class="subtitle">The best tool for learning your most important information, powered by Gemini 2.0</p>
+            <a href="#try-now" class="cta-button">Try NotebookLM</a>
+        </section>
+
+        <section class="ai-assistant">
+            <h2>Your personalized AI assistant for information gathering</h2>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <div class="icon">📁</div>
+                    <h3>Share your sources</h3>
+                    <p>Upload PDF files, web pages, YouTube videos, audio files, Google documents or presentations - NotebookLM processes them and identifies interesting connections between topics. All powered by Gemini 2.0's multimodal content understanding.</p>
+                </div>
+                <div class="feature-image">
+                    <img src="/images/app-preview.png" alt="Application preview" class="preview-image">
+                </div>
+            </div>
+        </section>
     </main>
 
     {{footer}}
