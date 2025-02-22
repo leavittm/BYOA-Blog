@@ -32,12 +32,19 @@ function loadPartial(name, data = {}) {
         partial = partial.replace('{{posts_list}}', postsListHtml);
     }
     
+    // Add subscribe partial handling
+    if (name === 'subscribe') {
+        const subscribe = fs.readFileSync(path.join(__dirname, '../templates/partials/subscribe.html'), 'utf-8');
+        return subscribe;
+    }
+    
     return partial;
 }
 
 function buildPage(template, data) {
     const header = loadPartial('header', { posts: data.allPosts });
     const footer = loadPartial('footer');
+    const subscribe = loadPartial('subscribe');
     
     let html = template
         .replaceAll('{{header}}', header)
@@ -46,7 +53,8 @@ function buildPage(template, data) {
         .replaceAll('{{head}}', data.head || '')
         .replaceAll('{{content}}', data.content)
         .replaceAll('{{posts}}', data.posts || '')
-        .replaceAll('{{scripts}}', data.scripts || '');
+        .replaceAll('{{scripts}}', data.scripts || '')
+        .replaceAll('{{subscribe}}', subscribe);
 
     // Handle post-specific variables
     if (data.date) {
